@@ -74,7 +74,7 @@ function App() {
     try {
       const interview = {
         candidateId,
-        candidateName: email, // Podemos ajustar isso se você tiver o nome do candidato
+        candidateName: email,
         start: slot.start,
         end: slot.end,
         type: slot.type,
@@ -97,57 +97,154 @@ function App() {
     }
   };
 
+  const formatDateTime = (date) => {
+    return new Date(date).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f6f8' }}>
-      <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', width: '400px', textAlign: 'center' }}>
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f5f6f8 0%, #e0e0e0 100%)',
+      fontFamily: "'Roboto', sans-serif",
+    }}>
+      <div style={{
+        backgroundColor: '#fff',
+        padding: '30px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        width: '500px',
+        maxWidth: '90%',
+        textAlign: 'center',
+        border: '1px solid #e0e0e0',
+      }}>
         {!isValidated ? (
           <>
-            <h2>Validate Your Email</h2>
-            <p>Please enter your email to validate and proceed to scheduling:</p>
+            <h2 style={{
+              fontSize: '28px',
+              color: '#2c3e50',
+              marginBottom: '20px',
+              fontWeight: '600',
+            }}>
+              Validate Your Email
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: '#666',
+              marginBottom: '20px',
+            }}>
+              Please enter your email to validate and proceed to scheduling:
+            </p>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '4px', border: '1px solid #ccc' }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginBottom: '20px',
+                borderRadius: '8px',
+                border: '1px solid #ccc',
+                fontSize: '16px',
+                outline: 'none',
+                transition: 'border-color 0.3s ease',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#2c3e50'}
+              onBlur={(e) => e.target.style.borderColor = '#ccc'}
             />
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {error && <p style={{ color: '#ff4d4f', marginBottom: '20px', fontSize: '14px' }}>{error}</p>}
             <button
               onClick={handleValidateEmail}
               style={{
                 background: '#2c3e50',
                 color: 'white',
                 border: 'none',
-                padding: '10px 20px',
-                borderRadius: '6px',
+                padding: '12px 30px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                transition: 'background 0.3s ease',
+                fontSize: '16px',
+                fontWeight: '500',
+                transition: 'background 0.3s ease, transform 0.1s ease',
               }}
               onMouseEnter={(e) => e.target.style.background = '#34495e'}
               onMouseLeave={(e) => e.target.style.background = '#2c3e50'}
+              onMouseDown={(e) => e.target.style.transform = 'scale(0.98)'}
+              onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
             >
               Validate Email
             </button>
           </>
         ) : (
           <>
-            <h2>FMX Consultoria</h2>
+            <h2 style={{
+              fontSize: '28px',
+              color: '#2c3e50',
+              marginBottom: '20px',
+              fontWeight: '600',
+            }}>
+              FMX Consultoria
+            </h2>
             {availableSlots.length > 0 ? (
               <div>
-                <p>Select a date for your interview:</p>
+                <p style={{
+                  fontSize: '16px',
+                  color: '#666',
+                  marginBottom: '20px',
+                }}>
+                  Select a date for your interview:
+                </p>
                 <ul style={{ listStyle: 'none', padding: 0 }}>
                   {availableSlots.map((slot, index) => (
-                    <li key={index} style={{ margin: '10px 0' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedDate === slot.start}
-                        onChange={() => handleDateSelection(slot)}
-                        disabled={selectedDate && selectedDate !== slot.start}
-                      />
-                      {slot.type === 'online' ? 'Online' : 'In-Person'}: {new Date(slot.start).toLocaleString()} - {new Date(slot.end).toLocaleString()}
+                    <li key={index} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: selectedDate === slot.start ? '#e6f4ea' : '#f9f9f9',
+                      padding: '15px',
+                      margin: '10px 0',
+                      borderRadius: '8px',
+                      border: `1px solid ${selectedDate === slot.start ? '#0FBC49' : '#e0e0e0'}`,
+                      transition: 'all 0.3s ease',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedDate === slot.start}
+                          onChange={() => handleDateSelection(slot)}
+                          disabled={selectedDate && selectedDate !== slot.start}
+                          style={{ marginRight: '15px', cursor: 'pointer' }}
+                        />
+                        <span style={{
+                          fontSize: '16px',
+                          color: '#333',
+                          fontWeight: '500',
+                        }}>
+                          {formatDateTime(slot.start).split(',')[0]} - Das {formatDateTime(slot.start).split(',')[1]} às {formatDateTime(slot.end).split(',')[1]} ({slot.type === 'online' ? 'Online' : 'In-Person'})
+                        </span>
+                      </div>
                       {selectedDate === slot.start && (
-                        <button onClick={handleEditDate} style={{ marginLeft: '10px', background: '#ff4d4f', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>
+                        <button onClick={handleEditDate} style={{
+                          background: '#ff4d4f',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 15px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          transition: 'background 0.3s ease',
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = '#e63946'}
+                        onMouseLeave={(e) => e.target.style.background = '#ff4d4f'}
+                        >
                           Edit
                         </button>
                       )}
@@ -155,13 +252,15 @@ function App() {
                   ))}
                 </ul>
                 {selectedDate && (
-                  <p style={{ color: '#0FBC49' }}>Interview scheduled successfully!</p>
+                  <p style={{ color: '#0FBC49', marginTop: '20px', fontSize: '16px', fontWeight: '500' }}>
+                    Interview scheduled successfully!
+                  </p>
                 )}
               </div>
             ) : (
-              <p>No interview slots available at the moment.</p>
+              <p style={{ fontSize: '16px', color: '#666' }}>No interview slots available at the moment.</p>
             )}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            {error && <p style={{ color: '#ff4d4f', marginTop: '20px', fontSize: '14px' }}>{error}</p>}
           </>
         )}
       </div>
@@ -169,4 +268,4 @@ function App() {
   );
 }
 
-export default App; /* alterado */
+export default App;
