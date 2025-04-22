@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { db, doc, setDoc, getDoc } from './firebase/firebase'; // Importe do firebase.js
+import { db, doc, setDoc, getDoc } from './firebase/firebase';
 
 function App() {
   const [email, setEmail] = useState('');
   const [candidateId, setCandidateId] = useState('');
-  const [interviewType, setInterviewType] = useState('');
   const [isValidated, setIsValidated] = useState(false);
   const [error, setError] = useState('');
 
@@ -12,9 +11,7 @@ function App() {
     // Extrair parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
-    const type = params.get('type');
     setCandidateId(id);
-    setInterviewType(type);
 
     // Verificar se o e-mail já foi validado
     const checkValidation = async () => {
@@ -116,4 +113,4 @@ function App() {
   );
 }
 
-export default App; /* comentário */
+export default App;
