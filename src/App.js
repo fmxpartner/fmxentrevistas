@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } from './firebase/firebase'; // Adiciona deleteDoc
+import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } from './firebase/firebase';
 
 function App() {
   const [email, setEmail] = useState('');
@@ -27,7 +27,21 @@ function App() {
           // Buscar as datas disponíveis
           const slotsSnapshot = await getDocs(collection(db, 'interviewSlots'));
           const slotsList = slotsSnapshot.docs.map((doc) => doc.data());
-          setAvailableSlots(slotsList);
+          console.log('Initial available slots fetched:', slotsList);
+
+          // Buscar os agendamentos para filtrar os slots já usados
+          const interviewsSnapshot = await getDocs(collection(db, 'scheduledInterviews'));
+          const interviewsList = interviewsSnapshot.docs.map((doc) => doc.data());
+          console.log('Scheduled interviews:', interviewsList);
+
+          // Filtrar os slots que não estão em scheduledInterviews
+          const available = slotsList.filter(slot => 
+            !interviewsList.some(interview => 
+              interview.start === slot.start && interview.end === slot.end && interview.type === slot.type
+            )
+          );
+          console.log('Filtered available slots:', available);
+          setAvailableSlots(available);
 
           // Verificar se o candidato já escolheu uma data
           const scheduledRef = doc(db, 'scheduledInterviews', id);
@@ -63,7 +77,20 @@ function App() {
       // Buscar as datas disponíveis após a validação
       const slotsSnapshot = await getDocs(collection(db, 'interviewSlots'));
       const slotsList = slotsSnapshot.docs.map((doc) => doc.data());
-      setAvailableSlots(slotsList);
+      console.log('Available slots after validation:', slotsList);
+
+      // Buscar os agendamentos para filtrar os slots já usados
+      const interviewsSnapshot = await getDocs(collection(db, 'scheduledInterviews'));
+      const interviewsList = interviewsSnapshot.docs.map((doc) => doc.data());
+
+      // Filtrar os slots que não estão em scheduledInterviews
+      const available = slotsList.filter(slot => 
+        !interviewsList.some(interview => 
+          interview.start === slot.start && interview.end === slot.end && interview.type === slot.type
+        )
+      );
+      console.log('Filtered available slots after validation:', available);
+      setAvailableSlots(available);
     } catch (error) {
       console.error('Error validating email:', error);
       setError('Error validating email. Please try again.');
@@ -106,9 +133,11 @@ function App() {
 
       // Remover o slot da coleção interviewSlots e do estado availableSlots
       await deleteDoc(doc(db, 'interviewSlots', `${slot.start}_${slot.type}`));
-      setAvailableSlots(availableSlots.filter(s => 
+      const updatedSlots = availableSlots.filter(s => 
         s.start !== slot.start || s.type !== slot.type
-      ));
+      );
+      console.log('Updated available slots after scheduling:', updatedSlots);
+      setAvailableSlots(updatedSlots);
 
       setSelectedDate(slot.start);
     } catch (error) {
@@ -144,7 +173,9 @@ function App() {
       // Restaurar o slot na coleção interviewSlots e no estado availableSlots
       if (restoredSlot) {
         await setDoc(doc(db, 'interviewSlots', `${restoredSlot.start}_${restoredSlot.type}`), restoredSlot);
-        setAvailableSlots([...availableSlots, restoredSlot]);
+        const updatedSlots = [...availableSlots, restoredSlot];
+        console.log('Updated available slots after canceling:', updatedSlots);
+        setAvailableSlots(updatedSlots);
       }
 
       setSelectedDate(null);
