@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, doc, setDoc, getDoc, collection, getDocs } from './firebase/firebase';
+import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc } from './firebase/firebase'; // Adiciona updateDoc
 
 function App() {
   const [email, setEmail] = useState('');
@@ -70,16 +70,30 @@ function App() {
     }
   };
 
+  const generateMeetLink = () => {
+    return `https://meet.google.com/${Math.random().toString(36).substring(2, 15)}`;
+  };
+
   const handleDateSelection = async (slot) => {
     try {
+      const link = slot.type === 'online' ? generateMeetLink() : null;
       const interview = {
         candidateId,
         candidateName: email,
         start: slot.start,
         end: slot.end,
         type: slot.type,
+        link: link,
       };
       await setDoc(doc(db, 'scheduledInterviews', candidateId), interview);
+      
+      // Atualizar o documento do candidato com o link do Google Meet
+      const candidateRef = doc(db, 'candidates', candidateId);
+      await updateDoc(candidateRef, {
+        interviewDate: slot.start,
+        interviewLink: link,
+      });
+
       setSelectedDate(slot.start);
     } catch (error) {
       console.error('Error scheduling interview:', error);
@@ -90,6 +104,14 @@ function App() {
   const handleEditDate = async () => {
     try {
       await setDoc(doc(db, 'scheduledInterviews', candidateId), {});
+      
+      // Remover o link do documento do candidato
+      const candidateRef = doc(db, 'candidates', candidateId);
+      await updateDoc(candidateRef, {
+        interviewDate: null,
+        interviewLink: null,
+      });
+
       setSelectedDate(null);
     } catch (error) {
       console.error('Error clearing interview date:', error);
