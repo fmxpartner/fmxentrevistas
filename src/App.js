@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } from './firebase'; // Caminho ajustado
+import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } from './firebase/firebase'; // Corrigido o caminho
 
 function App() {
   const [email, setEmail] = useState('');
@@ -97,7 +97,7 @@ function App() {
     };
     const code = `${generateSegment(3)}-${generateSegment(4)}-${generateSegment(3)}`;
     const link = `https://meet.google.com/${code}`;
-    console.log('Generated Google Meet link:', link); // Log para depuração
+    console.log('Generated Google Meet link:', link);
     return link;
   };
 
