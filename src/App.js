@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } from './firebase/firebase';
+import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } from './firebase'; // Caminho ajustado
 
 function App() {
   const [email, setEmail] = useState('');
@@ -10,12 +10,10 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
-    // Extrair parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     setCandidateId(id);
 
-    // Verificar se o e-mail já foi validado
     const checkValidation = async () => {
       if (id) {
         const validatedRef = doc(db, 'validatedEmails', id);
@@ -24,17 +22,14 @@ function App() {
           setIsValidated(true);
           setEmail(validatedDoc.data().email);
 
-          // Buscar as datas disponíveis
           const slotsSnapshot = await getDocs(collection(db, 'interviewSlots'));
           const slotsList = slotsSnapshot.docs.map((doc) => doc.data());
           console.log('Initial available slots fetched:', slotsList);
 
-          // Buscar os agendamentos para filtrar os slots já usados
           const interviewsSnapshot = await getDocs(collection(db, 'scheduledInterviews'));
           const interviewsList = interviewsSnapshot.docs.map((doc) => doc.data());
           console.log('Scheduled interviews:', interviewsList);
 
-          // Filtrar os slots que não estão em scheduledInterviews
           const available = slotsList.filter(slot => 
             !interviewsList.some(interview => 
               interview.start === slot.start && interview.end === slot.end && interview.type === slot.type
@@ -43,7 +38,6 @@ function App() {
           console.log('Filtered available slots:', available);
           setAvailableSlots(available);
 
-          // Verificar se o candidato já escolheu uma data
           const scheduledRef = doc(db, 'scheduledInterviews', id);
           const scheduledDoc = await getDoc(scheduledRef);
           if (scheduledDoc.exists()) {
@@ -62,28 +56,23 @@ function App() {
     }
 
     try {
-      // Validar e-mail (simples validação de formato)
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         setError('Invalid email format.');
         return;
       }
 
-      // Salvar e-mail validado no Firestore
       await setDoc(doc(db, 'validatedEmails', candidateId), { email });
       setIsValidated(true);
       setError('');
 
-      // Buscar as datas disponíveis após a validação
       const slotsSnapshot = await getDocs(collection(db, 'interviewSlots'));
       const slotsList = slotsSnapshot.docs.map((doc) => doc.data());
       console.log('Available slots after validation:', slotsList);
 
-      // Buscar os agendamentos para filtrar os slots já usados
       const interviewsSnapshot = await getDocs(collection(db, 'scheduledInterviews'));
       const interviewsList = interviewsSnapshot.docs.map((doc) => doc.data());
 
-      // Filtrar os slots que não estão em scheduledInterviews
       const available = slotsList.filter(slot => 
         !interviewsList.some(interview => 
           interview.start === slot.start && interview.end === slot.end && interview.type === slot.type
@@ -98,7 +87,6 @@ function App() {
   };
 
   const generateMeetLink = () => {
-    // Gera um código no formato xxx-yyyy-zzz
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const generateSegment = (length) => {
       let segment = '';
@@ -108,7 +96,9 @@ function App() {
       return segment;
     };
     const code = `${generateSegment(3)}-${generateSegment(4)}-${generateSegment(3)}`;
-    return `https://meet.google.com/${code}`;
+    const link = `https://meet.google.com/${code}`;
+    console.log('Generated Google Meet link:', link); // Log para depuração
+    return link;
   };
 
   const handleDateSelection = async (slot) => {
@@ -124,14 +114,12 @@ function App() {
       };
       await setDoc(doc(db, 'scheduledInterviews', candidateId), interview);
       
-      // Atualizar o documento do candidato com o link do Google Meet
       const candidateRef = doc(db, 'candidates', candidateId);
       await updateDoc(candidateRef, {
         interviewDate: slot.start,
         interviewLink: link,
       });
 
-      // Remover o slot da coleção interviewSlots e do estado availableSlots
       await deleteDoc(doc(db, 'interviewSlots', `${slot.start}_${slot.type}`));
       const updatedSlots = availableSlots.filter(s => 
         s.start !== slot.start || s.type !== slot.type
@@ -148,7 +136,6 @@ function App() {
 
   const handleEditDate = async () => {
     try {
-      // Buscar o agendamento atual para restaurar o slot
       const scheduledRef = doc(db, 'scheduledInterviews', candidateId);
       const scheduledDoc = await getDoc(scheduledRef);
       let restoredSlot = null;
@@ -163,14 +150,12 @@ function App() {
 
       await setDoc(doc(db, 'scheduledInterviews', candidateId), {});
       
-      // Remover o link do documento do candidato
       const candidateRef = doc(db, 'candidates', candidateId);
       await updateDoc(candidateRef, {
         interviewDate: null,
         interviewLink: null,
       });
 
-      // Restaurar o slot na coleção interviewSlots e no estado availableSlots
       if (restoredSlot) {
         await setDoc(doc(db, 'interviewSlots', `${restoredSlot.start}_${restoredSlot.type}`), restoredSlot);
         const updatedSlots = [...availableSlots, restoredSlot];
@@ -356,4 +341,4 @@ function App() {
   );
 }
 
-export default App; /* */
+export default App;
