@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc } from './firebase/firebase'; // Adiciona updateDoc
+import { db, doc, setDoc, getDoc, collection, getDocs, updateDoc, deleteDoc } from './firebase/firebase'; // Adiciona deleteDoc
 
 function App() {
   const [email, setEmail] = useState('');
@@ -71,7 +71,17 @@ function App() {
   };
 
   const generateMeetLink = () => {
-    return `https://meet.google.com/${Math.random().toString(36).substring(2, 15)}`;
+    // Gera um código no formato xxx-yyyy-zzz
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const generateSegment = (length) => {
+      let segment = '';
+      for (let i = 0; i < length; i++) {
+        segment += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return segment;
+    };
+    const code = `${generateSegment(3)}-${generateSegment(4)}-${generateSegment(3)}`;
+    return `https://meet.google.com/${code}`;
   };
 
   const handleDateSelection = async (slot) => {
@@ -94,6 +104,12 @@ function App() {
         interviewLink: link,
       });
 
+      // Remover o slot da coleção interviewSlots e do estado availableSlots
+      await deleteDoc(doc(db, 'interviewSlots', `${slot.start}_${slot.type}`));
+      setAvailableSlots(availableSlots.filter(s => 
+        s.start !== slot.start || s.type !== slot.type
+      ));
+
       setSelectedDate(slot.start);
     } catch (error) {
       console.error('Error scheduling interview:', error);
@@ -103,6 +119,19 @@ function App() {
 
   const handleEditDate = async () => {
     try {
+      // Buscar o agendamento atual para restaurar o slot
+      const scheduledRef = doc(db, 'scheduledInterviews', candidateId);
+      const scheduledDoc = await getDoc(scheduledRef);
+      let restoredSlot = null;
+      if (scheduledDoc.exists()) {
+        const interviewData = scheduledDoc.data();
+        restoredSlot = {
+          start: interviewData.start,
+          end: interviewData.end,
+          type: interviewData.type,
+        };
+      }
+
       await setDoc(doc(db, 'scheduledInterviews', candidateId), {});
       
       // Remover o link do documento do candidato
@@ -111,6 +140,12 @@ function App() {
         interviewDate: null,
         interviewLink: null,
       });
+
+      // Restaurar o slot na coleção interviewSlots e no estado availableSlots
+      if (restoredSlot) {
+        await setDoc(doc(db, 'interviewSlots', `${restoredSlot.start}_${restoredSlot.type}`), restoredSlot);
+        setAvailableSlots([...availableSlots, restoredSlot]);
+      }
 
       setSelectedDate(null);
     } catch (error) {
